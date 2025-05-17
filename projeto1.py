@@ -2,49 +2,117 @@ import math
 
 # ------------------ MÉTODOS ------------------
 
-def bissecao(f, a, b, tol=1e-6, max_iter=100):
-    for i in range(max_iter):
-        c = (a + b) / 2
-        if abs(f(c)) < tol or (b - a) / 2 < tol:
-            return c, i+1
-        if f(a) * f(c) < 0:
-            b = c
+def bissecao(f, a, b, tol=1e-5):
+    if f(a) * f(b) >= 0:
+        print("O método da bisseção não pode ser aplicado: f(a)f(b) >= 0")
+        return None, 0
+    k = 1
+    M = f(a)
+    while True:
+        x = (a + b) / 2
+        if M * f(x) > 0:
+            a = x
+            M = f(a)
         else:
-            a = c
-    return c, max_iter
+            b = x
+        if (b - a) < tol:
+            return (a + b) / 2, k
+        k += 1
 
-def ponto_fixo(g, x0, tol=1e-6, max_iter=100):
-    for i in range(max_iter):
-        try:
+
+def ponto_fixo(g, f, x0, e1=1e-5, e2=1e-5, max_iter=10):
+    try:
+        if abs(f(x0)) < e1:
+            return x0, 0
+        k = 1
+        while k <= max_iter:
             x1 = g(x0)
-        except OverflowError:
-            print(f"Overflow na iteração {i+1} com x0 = {x0}")
-            return None, i+1
-        if abs(x1 - x0) < tol:
-            return x1, i+1
-        x0 = x1
-    return x0, max_iter
+            # Detectar overflow ou valores inválidos
+            if not isinstance(x1, float) or x1 != x1 or abs(x1) > 1e10:
+                print("Overflow numérico detectado ou valor inválido.")
+                return None, k
+            if abs(f(x1)) < e1 or abs(x1 - x0) < e2:
+                return x1, k
+            x0 = x1
+            k += 1
+        return x1, k  # Retorna a última aproximação após max_iter
+    except OverflowError:
+        print("Overflow detectado.")
+        return None, k
 
 
-def newton(f, df, x0, tol=1e-6, max_iter=100):
-    for i in range(max_iter):
-        if df(x0) == 0:
-            raise ValueError("Derivada zero.")
-        x1 = x0 - f(x0) / df(x0)
-        if abs(x1 - x0) < tol:
-            return x1, i+1
-        x0 = x1
-    return x0, max_iter
 
-def secante(f, x0, x1, tol=1e-6, max_iter=100):
-    for i in range(max_iter):
-        if f(x1) - f(x0) == 0:
-            return x1, i+1
-        x2 = x1 - f(x1) * (x1 - x0) / (f(x1) - f(x0))
-        if abs(x2 - x1) < tol:
-            return x2, i+1
-        x0, x1 = x1, x2
-    return x1, max_iter
+def newton(f, df, x0, e1=1e-5, e2=1e-5, max_iter=10):
+    try:
+        if abs(f(x0)) < e1:
+            return x0, 0
+
+        k = 1
+        while k <= max_iter:
+            dfx0 = df(x0)
+
+            # Verifica se a derivada é muito pequena ou nula (evita divisão por zero)
+            if abs(dfx0) < 1e-12:
+                print("Derivada próxima de zero. Método falhou.")
+                return None, k
+
+            x1 = x0 - f(x0) / dfx0
+
+            # Verifica overflow
+            if not isinstance(x1, float) or x1 != x1 or abs(x1) > 1e10:
+                print("Overflow numérico detectado ou valor inválido.")
+                return None, k
+
+            if abs(f(x1)) < e1 or abs(x1 - x0) < e2:
+                k += 1
+                return x1, k
+
+            x0 = x1
+            k += 1
+
+        return x1, k  # Retorna a última aproximação após max_iter
+    except OverflowError:
+        print("Overflow detectado.")
+        return None, k
+
+
+def secante(f, x0, x1, e1=1e-4, e2=1e-4, max_iter=10):
+    try:
+        # Testes iniciais
+        if abs(f(x0)) < e1:
+            return x0, 0
+        if abs(f(x1)) < e1 or abs(x1 - x0) < e2:
+            return x1, 1
+
+        k = 1
+        while k <= max_iter:
+            fx0 = f(x0)
+            fx1 = f(x1)
+
+            denominador = fx1 - fx0
+            if abs(denominador) < 1e-12:
+                print("Divisão por valor pequeno demais (quase zero). Método falhou.")
+                return None, k
+
+            x2 = x1 - fx1 * (x1 - x0) / denominador
+
+            if not isinstance(x2, float) or x2 != x2 or abs(x2) > 1e10:
+                print("Overflow numérico detectado ou valor inválido.")
+                return None, k
+
+            if abs(f(x2)) < e1 or abs(x2 - x1) < e2:
+                k += 1  # conta a última iteração corretamente
+                return x2, k
+
+            # Atualiza os valores para a próxima iteração
+            x0, x1 = x1, x2
+            k += 1
+
+        return x2, k
+    except OverflowError:
+        print("Overflow detectado.")
+        return None, k
+
 
 # ------------------ EXEMPLO 1 ------------------
 
@@ -54,15 +122,29 @@ def exemplo_1():
     df = lambda x: 3*x**2 - 9
     g = lambda x: (x**3 + 3)/9  # Transformação para ponto fixo
     a, b = 0, 1
-    x0 = 0.5
+    x0 = 0.5    
+    
 
-    print("Bisseção:", bissecao(f, a, b))
-    print("Ponto Fixo:", ponto_fixo(g, x0))
-    print("Newton-Raphson:", newton(f, df, x0))
-    print("Secante:", secante(f, a, b))
+    raiz, iteracoes = bissecao(f, a, b, tol=1e-3)
+    raizpf, iteracoespf = ponto_fixo(g, f, x0, e1=1e-3, e2=1e-3, max_iter=10)
+    raiznr, iteracoesnr = newton(f, df, x0, e1=1e-3, e2=1e-3, max_iter=10)
+    raizs, iteracoess = secante(f, x0=0, x1=1, e1=1e-4, e2=1e-4)
+    print(f"Bisseção: raiz ≈ {raiz}, iterações: {iteracoes}, intervalo: [{a}, {b}], tol = 1e-3")
+    if raizpf is not None:
+        print(f"Ponto Fixo: raiz ≈ {raizpf}, iterações: {iteracoespf}, ε₁=1e-3, ε₂=1e-3")
+    else:
+        print(f"Ponto Fixo: falhou após {iteracoes} iterações.")
+    
+    if raiznr is not None:
+        print(f"Newton-Raphson: raiz ≈ {raiznr}, iterações: {iteracoesnr}, ε₁=1e-3, ε₂=1e-3")
+    else:
+        print(f"Newton-Raphson: falhou após {iteracoes} iterações.")
+        
+    print(f"Secante: raiz ≈ {raizs}, iterações: {iteracoess} ")
 
 # ------------------ EXEMPLO 2 ------------------
 
+'''
 def exemplo_2():
     print("\n--- Exemplo 2: f(x) = 2x³ - 20x - 13 ---")
     f = lambda x: 2*x**3 - 20*x - 13
@@ -92,8 +174,9 @@ def exemplo_3():
     print("Secante:", secante(f, a, b))
 
 # ------------------ EXECUTAR ------------------
+'''
 
 if __name__ == "__main__":
     exemplo_1()
-    exemplo_2()
-    exemplo_3()
+   # exemplo_2()
+    #exemplo_3()

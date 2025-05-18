@@ -2,7 +2,7 @@ import math
 
 # ------------------ MÉTODOS ------------------
 
-def bissecao(f, a, b, tol=1e-5):
+def bissecao(f, a, b, tol):
     if f(a) * f(b) >= 0:
         print("O método da bisseção não pode ser aplicado: f(a)f(b) >= 0")
         return None, 0
@@ -20,7 +20,7 @@ def bissecao(f, a, b, tol=1e-5):
         k += 1
 
 
-def ponto_fixo(g, f, x0, e1=1e-5, e2=1e-5, max_iter=10):
+def ponto_fixo(g, f, x0, e1, e2, max_iter=10):
     try:
         if abs(f(x0)) < e1:
             return x0, 0
@@ -42,7 +42,7 @@ def ponto_fixo(g, f, x0, e1=1e-5, e2=1e-5, max_iter=10):
 
 
 
-def newton(f, df, x0, e1=1e-5, e2=1e-5, max_iter=10):
+def newton(f, df, x0, e1, e2, max_iter=10):
     try:
         if abs(f(x0)) < e1:
             return x0, 0
@@ -76,35 +76,34 @@ def newton(f, df, x0, e1=1e-5, e2=1e-5, max_iter=10):
         return None, k
 
 
-def secante(f, x0, x1, e1=1e-4, e2=1e-4, max_iter=10):
+def secante(f, x0, x1, e1=1e-3, e2=1e-3, max_iter=10):
     try:
-        # Testes iniciais
+        #print(f"{'Iteração':<10}{'x':<20}{'f(x)':<20}")
+        
         if abs(f(x0)) < e1:
+            #print(f"{0:<10}{x0:<20.10f}{f(x0):<20.10f}")
             return x0, 0
         if abs(f(x1)) < e1 or abs(x1 - x0) < e2:
+            #print(f"{1:<10}{x1:<20.10f}{f(x1):<20.10f}")
             return x1, 1
 
         k = 1
         while k <= max_iter:
             fx0 = f(x0)
             fx1 = f(x1)
-
-            denominador = fx1 - fx0
-            if abs(denominador) < 1e-12:
-                print("Divisão por valor pequeno demais (quase zero). Método falhou.")
+            denom = fx1 - fx0
+            if abs(denom) < 1e-12:
+                print("Divisão por valor muito pequeno. Método falhou.")
                 return None, k
 
-            x2 = x1 - fx1 * (x1 - x0) / denominador
+            x2 = x1 - fx1 * (x1 - x0) / denom
+            fx2 = f(x2)
 
-            if not isinstance(x2, float) or x2 != x2 or abs(x2) > 1e10:
-                print("Overflow numérico detectado ou valor inválido.")
-                return None, k
+            #print(f"{k:<10}{x2:<20.10f}{fx2:<20.10f}")
 
-            if abs(f(x2)) < e1 or abs(x2 - x1) < e2:
-                k += 1  # conta a última iteração corretamente
+            if abs(fx2) < e1 or abs(x2 - x1) < e2:
                 return x2, k
 
-            # Atualiza os valores para a próxima iteração
             x0, x1 = x1, x2
             k += 1
 
@@ -112,6 +111,7 @@ def secante(f, x0, x1, e1=1e-4, e2=1e-4, max_iter=10):
     except OverflowError:
         print("Overflow detectado.")
         return None, k
+
 
 
 # ------------------ EXEMPLO 1 ------------------
@@ -123,40 +123,55 @@ def exemplo_1():
     g = lambda x: (x**3 + 3)/9  # Transformação para ponto fixo
     a, b = 0, 1
     x0 = 0.5    
-    
+    epsilon = 5e-4
+
 
     raiz, iteracoes = bissecao(f, a, b, tol=1e-3)
-    raizpf, iteracoespf = ponto_fixo(g, f, x0, e1=1e-3, e2=1e-3, max_iter=10)
+    raizpf, iteracoespf = ponto_fixo(g, f, x0, e1=epsilon, e2=epsilon, max_iter=10)
     raiznr, iteracoesnr = newton(f, df, x0, e1=1e-3, e2=1e-3, max_iter=10)
-    raizs, iteracoess = secante(f, x0=0, x1=1, e1=1e-4, e2=1e-4)
+    raizs, iteracoess = secante(f, x0=0, x1=1, e1=1e-3, e2=1e-3)
     print(f"Bisseção: raiz ≈ {raiz}, iterações: {iteracoes}, intervalo: [{a}, {b}], tol = 1e-3")
     if raizpf is not None:
-        print(f"Ponto Fixo: raiz ≈ {raizpf}, iterações: {iteracoespf}, ε₁=1e-3, ε₂=1e-3")
+        print(f"Ponto Fixo: raiz ≈ {raizpf}, iterações: {iteracoespf}, ε₁=5e-4, ε₂=5e-4")
     else:
         print(f"Ponto Fixo: falhou após {iteracoes} iterações.")
     
     if raiznr is not None:
-        print(f"Newton-Raphson: raiz ≈ {raiznr}, iterações: {iteracoesnr}, ε₁=1e-3, ε₂=1e-3")
+        print(f"Newton-Raphson: raiz ≈ {raiznr}, iterações: {iteracoesnr}, ε₁=1e-4, ε₂=1e-4")
     else:
         print(f"Newton-Raphson: falhou após {iteracoes} iterações.")
         
-    print(f"Secante: raiz ≈ {raizs}, iterações: {iteracoess} ")
+    print(f"Secante: raiz ≈ {raizs}, iterações: {iteracoess}, ε₁=5e-4, ε₂=5e-4 ")
 
 # ------------------ EXEMPLO 2 ------------------
 
-'''
+
 def exemplo_2():
     print("\n--- Exemplo 2: f(x) = 2x³ - 20x - 13 ---")
     f = lambda x: 2*x**3 - 20*x - 13
     df = lambda x: 6*x**2 - 20
-    g = lambda x: (2*x**3 - 13)/20  # Transformação para ponto fixo
+    g = lambda x: (2*x**3 - 13)/20
     a, b = 3, 4
     x0 = 3.5
 
-    print("Bisseção:", bissecao(f, a, b))
-    print("Ponto Fixo:", ponto_fixo(g, x0))
-    print("Newton-Raphson:", newton(f, df, x0))
-    print("Secante:", secante(f, a, b))
+    raiz, iteracoes = bissecao(f, a, b, tol=1e-3)
+    raizpf, iteracoespf = ponto_fixo(g, f, x0, e1=1e-3, e2=1e-3, max_iter=10)
+    raiznr, iteracoesnr = newton(f, df, x0, e1=1e-3, e2=1e-3, max_iter=10)
+    raizs, iteracoess = secante(f, x0=a, x1=b, e1=1e-3, e2=1e-3)
+
+    print(f"Bisseção: raiz ≈ {raiz}, iterações: {iteracoes}, intervalo: [{a}, {b}], tol = 1e-3")
+    if raizpf is not None:
+        print(f"Ponto Fixo: raiz ≈ {raizpf}, iterações: {iteracoespf}, ε₁=1e-3, ε₂=1e-3")
+    else:
+        print(f"Ponto Fixo: falhou após {iteracoespf} iterações.")
+        
+    if raiznr is not None:
+        print(f"Newton-Raphson: raiz ≈ {raiznr}, iterações: {iteracoesnr}, ε₁=1e-3, ε₂=1e-3")
+    else:
+        print(f"Newton-Raphson: falhou após {iteracoesnr} iterações.")
+        
+    print(f"Secante: raiz ≈ {raizs}, iterações: {iteracoess}, ε₁=1e-3, ε₂=1e-3")
+
 
 # ------------------ EXEMPLO 3 (Não Polinomial) ------------------
 
@@ -168,15 +183,29 @@ def exemplo_3():
     a, b = 0, 1
     x0 = 0.5
 
-    print("Bisseção:", bissecao(f, a, b))
-    print("Ponto Fixo:", ponto_fixo(g, x0))
-    print("Newton-Raphson:", newton(f, df, x0))
-    print("Secante:", secante(f, a, b))
+    raiz, iteracoes = bissecao(f, a, b, tol=1e-3)
+    raizpf, iteracoespf = ponto_fixo(g, f, x0, e1=1e-3, e2=1e-3, max_iter=10)
+    raiznr, iteracoesnr = newton(f, df, x0, e1=1e-3, e2=1e-3, max_iter=10)
+    raizs, iteracoess = secante(f, x0=a, x1=b, e1=1e-3, e2=1e-3)
+
+    print(f"Bisseção: raiz ≈ {raiz}, iterações: {iteracoes}, intervalo: [{a}, {b}], tol = 1e-3")
+    if raizpf is not None:
+        print(f"Ponto Fixo: raiz ≈ {raizpf}, iterações: {iteracoespf}, ε₁=1e-3, ε₂=1e-3")
+    else:
+        print(f"Ponto Fixo: falhou após {iteracoespf} iterações.")
+        
+    if raiznr is not None:
+        print(f"Newton-Raphson: raiz ≈ {raiznr}, iterações: {iteracoesnr}, ε₁=1e-3, ε₂=1e-3")
+    else:
+        print(f"Newton-Raphson: falhou após {iteracoesnr} iterações.")
+        
+    print(f"Secante: raiz ≈ {raizs}, iterações: {iteracoess}, ε₁=1e-3, ε₂=1e-3")
+
 
 # ------------------ EXECUTAR ------------------
-'''
+
 
 if __name__ == "__main__":
     exemplo_1()
-   # exemplo_2()
-    #exemplo_3()
+    exemplo_2()
+    exemplo_3()

@@ -136,7 +136,7 @@ def exemplo_1():
     a, b = 0, 1
     x0 = 0.5    
     epsilon = 5e-4
-    dg = derivada_aproximada(g, x0)
+    dg = derivada_aproximada(g, x0, epsilon)
 
     raiz, iteracoes = bissecao(f, a, b, tol=1e-3)
     raizpf, iteracoespf, convergencia = ponto_fixo(g, f, x0, e1=epsilon, e2=epsilon, max_iter=10, convergencia=False, dg=dg)

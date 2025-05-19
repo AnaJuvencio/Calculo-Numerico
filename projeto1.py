@@ -20,25 +20,35 @@ def bissecao(f, a, b, tol):
         k += 1
 
 
-def ponto_fixo(g, f, x0, e1, e2, max_iter=10):
+def ponto_fixo(g, f, x0, e1, e2, max_iter=10, convergencia=False, dg=None):
     try:
+        if dg is None:
+            dg = derivada_aproximada(g, x0)
+
+        if abs(dg) >= 1:
+            convergencia = True
+        else:
+            convergencia = False
+
         if abs(f(x0)) < e1:
-            return x0, 0
+            return x0, 0, convergencia
+
         k = 1
         while k <= max_iter:
             x1 = g(x0)
-            # Detectar overflow ou valores inválidos
             if not isinstance(x1, float) or x1 != x1 or abs(x1) > 1e10:
-                print("Overflow numérico detectado ou valor inválido.")
-                return None, k
+                return None, k, convergencia
             if abs(f(x1)) < e1 or abs(x1 - x0) < e2:
-                return x1, k
+                return x1, k, convergencia
             x0 = x1
             k += 1
-        return x1, k  # Retorna a última aproximação após max_iter
+
+        return x1, k, convergencia
     except OverflowError:
-        print("Overflow detectado.")
-        return None, k
+        print("Falha no método - ponto fixo:")
+        print("Mensagem de erro: Overflow detectado.")
+        return None, k, convergencia
+
 
 
 
@@ -53,14 +63,16 @@ def newton(f, df, x0, e1, e2, max_iter=10):
 
             # Verifica se a derivada é muito pequena ou nula (evita divisão por zero)
             if abs(dfx0) < 1e-12:
-                print("Derivada próxima de zero. Método falhou.")
+                print("Falha no método - newton:")
+                print("Mensagem de erro: Derivada próxima de zero. Método falhou.")
                 return None, k
 
             x1 = x0 - f(x0) / dfx0
 
             # Verifica overflow
             if not isinstance(x1, float) or x1 != x1 or abs(x1) > 1e10:
-                print("Overflow numérico detectado ou valor inválido.")
+                print("Falha no método - newton:")
+                print("Mensagem de erro: Overflow numérico detectado ou valor inválido.")
                 return None, k
 
             if abs(f(x1)) < e1 or abs(x1 - x0) < e2:
@@ -127,19 +139,24 @@ def exemplo_1():
 
 
     raiz, iteracoes = bissecao(f, a, b, tol=1e-3)
-    raizpf, iteracoespf = ponto_fixo(g, f, x0, e1=epsilon, e2=epsilon, max_iter=10)
+    raizpf, iteracoespf, convergencia = ponto_fixo(g, f, x0, e1=epsilon, e2=epsilon, max_iter=10, convergencia=False)
     raiznr, iteracoesnr = newton(f, df, x0, e1=1e-3, e2=1e-3, max_iter=10)
     raizs, iteracoess = secante(f, x0=0, x1=1, e1=1e-3, e2=1e-3)
     print(f"Bisseção: raiz ≈ {raiz}, iterações: {iteracoes}, intervalo: [{a}, {b}], tol = 1e-3")
     if raizpf is not None:
         print(f"Ponto Fixo: raiz ≈ {raizpf}, iterações: {iteracoespf}, ε₁=5e-4, ε₂=5e-4")
     else:
-        print(f"Ponto Fixo: falhou após {iteracoes} iterações.")
+        print(f"Ponto Fixo: falhou após {iteracoes}pf iterações.")
+        if convergencia is True:
+            print("Atenção: |g'({x0})| = {abs(dg):.4f} ≥ 1 ⇒ pode não convergir.")
+        else:
+            print("Falha no método - ponto fixo:")
+            print("Mensagem de erro: Overflow numérico detectado ou valor inválido.")
     
     if raiznr is not None:
         print(f"Newton-Raphson: raiz ≈ {raiznr}, iterações: {iteracoesnr}, ε₁=1e-4, ε₂=1e-4")
     else:
-        print(f"Newton-Raphson: falhou após {iteracoes} iterações.")
+        print(f"Newton-Raphson: falhou após {iteracoesnr} iterações.")
         
     print(f"Secante: raiz ≈ {raizs}, iterações: {iteracoess}, ε₁=5e-4, ε₂=5e-4 ")
 
@@ -154,16 +171,29 @@ def exemplo_2():
     a, b = 3, 4
     x0 = 3.5
 
+
+    dg = derivada_aproximada(g, x0)
+    raizpf, itpf, convergencia = ponto_fixo(g, f, x0, e1=1e-3, e2=1e-3, max_iter=10, convergencia=False, dg=dg)
     raiz, iteracoes = bissecao(f, a, b, tol=1e-3)
-    raizpf, iteracoespf = ponto_fixo(g, f, x0, e1=1e-3, e2=1e-3, max_iter=10)
+    #raizpf, iteracoespf = ponto_fixo(g, f, x0, e1=1e-3, e2=1e-3, max_iter=10)
     raiznr, iteracoesnr = newton(f, df, x0, e1=1e-3, e2=1e-3, max_iter=10)
     raizs, iteracoess = secante(f, x0=a, x1=b, e1=1e-3, e2=1e-3)
 
     print(f"Bisseção: raiz ≈ {raiz}, iterações: {iteracoes}, intervalo: [{a}, {b}], tol = 1e-3")
+    #if raizpf is not None:
+    #    print(f"Ponto Fixo: raiz ≈ {raizpf}, iterações: {iteracoespf}, ε₁=1e-3, ε₂=1e-3")
+    #else:
+    #    print(f"Ponto Fixo: falhou após {iteracoespf} iterações.")
     if raizpf is not None:
-        print(f"Ponto Fixo: raiz ≈ {raizpf}, iterações: {iteracoespf}, ε₁=1e-3, ε₂=1e-3")
+        print(f"Ponto Fixo: raiz ≈ {raizpf}, iterações: {itpf}, ε₁=1e-3, ε₂=1e-3")
     else:
-        print(f"Ponto Fixo: falhou após {iteracoespf} iterações.")
+        print(f"Ponto Fixo: falhou após {itpf} iterações.")
+        if convergencia is True:
+            print("Atenção: |g'({x0})| = {abs(dg):.4f} ≥ 1 ⇒ pode não convergir.")
+        else:
+            print("Falha no método - ponto fixo:")
+            print("Mensagem de erro: Overflow numérico detectado ou valor inválido.")
+            
         
     if raiznr is not None:
         print(f"Newton-Raphson: raiz ≈ {raiznr}, iterações: {iteracoesnr}, ε₁=1e-3, ε₂=1e-3")
@@ -184,7 +214,7 @@ def exemplo_3():
     x0 = 0.5
 
     raiz, iteracoes = bissecao(f, a, b, tol=1e-3)
-    raizpf, iteracoespf = ponto_fixo(g, f, x0, e1=1e-3, e2=1e-3, max_iter=10)
+    raizpf, iteracoespf, convergencia = ponto_fixo(g, f, x0, e1=1e-3, e2=1e-3, max_iter=10, convergencia=False)
     raiznr, iteracoesnr = newton(f, df, x0, e1=1e-3, e2=1e-3, max_iter=10)
     raizs, iteracoess = secante(f, x0=a, x1=b, e1=1e-3, e2=1e-3)
 
@@ -193,6 +223,11 @@ def exemplo_3():
         print(f"Ponto Fixo: raiz ≈ {raizpf}, iterações: {iteracoespf}, ε₁=1e-3, ε₂=1e-3")
     else:
         print(f"Ponto Fixo: falhou após {iteracoespf} iterações.")
+        if convergencia is True:
+            print("Atenção: |g'({x0})| = {abs(dg):.4f} ≥ 1 ⇒ pode não convergir.")
+        else:
+            print("Falha no método - ponto fixo:")
+            print("Mensagem de erro: Overflow numérico detectado ou valor inválido.")
         
     if raiznr is not None:
         print(f"Newton-Raphson: raiz ≈ {raiznr}, iterações: {iteracoesnr}, ε₁=1e-3, ε₂=1e-3")
@@ -200,6 +235,16 @@ def exemplo_3():
         print(f"Newton-Raphson: falhou após {iteracoesnr} iterações.")
         
     print(f"Secante: raiz ≈ {raizs}, iterações: {iteracoess}, ε₁=1e-3, ε₂=1e-3")
+
+
+def derivada_aproximada(g, x, h=1e-3):
+    return (g(x + h) - g(x - h)) / (2 * h)
+
+x0 = 3.5
+g = lambda x: (2*x**3 - 13)/20
+dg = derivada_aproximada(g, x0)
+        
+
 
 
 # ------------------ EXECUTAR ------------------

@@ -136,10 +136,10 @@ def exemplo_1():
     a, b = 0, 1
     x0 = 0.5    
     epsilon = 5e-4
-
+    dg = derivada_aproximada(g, x0)
 
     raiz, iteracoes = bissecao(f, a, b, tol=1e-3)
-    raizpf, iteracoespf, convergencia = ponto_fixo(g, f, x0, e1=epsilon, e2=epsilon, max_iter=10, convergencia=False)
+    raizpf, iteracoespf, convergencia = ponto_fixo(g, f, x0, e1=epsilon, e2=epsilon, max_iter=10, convergencia=False, dg=dg)
     raiznr, iteracoesnr = newton(f, df, x0, e1=1e-3, e2=1e-3, max_iter=10)
     raizs, iteracoess = secante(f, x0=0, x1=1, e1=1e-3, e2=1e-3)
     print(f"Bisseção: raiz ≈ {raiz}, iterações: {iteracoes}, intervalo: [{a}, {b}], tol = 1e-3")
@@ -213,8 +213,9 @@ def exemplo_3():
     a, b = 0, 1
     x0 = 0.5
 
+    dg = derivada_aproximada(g, x0)
     raiz, iteracoes = bissecao(f, a, b, tol=1e-3)
-    raizpf, iteracoespf, convergencia = ponto_fixo(g, f, x0, e1=1e-3, e2=1e-3, max_iter=10, convergencia=False)
+    raizpf, iteracoespf, convergencia = ponto_fixo(g, f, x0, e1=1e-3, e2=1e-3, max_iter=10, convergencia=False, dg =dg)
     raiznr, iteracoesnr = newton(f, df, x0, e1=1e-3, e2=1e-3, max_iter=10)
     raizs, iteracoess = secante(f, x0=a, x1=b, e1=1e-3, e2=1e-3)
 

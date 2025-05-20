@@ -148,7 +148,7 @@ def exemplo_1():
     else:
         print(f"Ponto Fixo: falhou após {iteracoes}pf iterações.")
         if convergencia is True:
-            print("Atenção: |g'({x0})| = {abs(dg):.4f} ≥ 1 ⇒ pode não convergir.")
+            print(f"Atenção: |g'({x0})| = {abs(dg):.4f} ≥ 1 ⇒ pode não convergir.")
         else:
             print("Falha no método - ponto fixo:")
             print("Mensagem de erro: Overflow numérico detectado ou valor inválido.")
@@ -172,7 +172,8 @@ def exemplo_2():
     x0 = 3.5
 
 
-    dg = derivada_aproximada(g, x0)
+    elpsilon = 1e-3
+    dg = derivada_aproximada(g, x0, elpsilon)
     raizpf, itpf, convergencia = ponto_fixo(g, f, x0, e1=1e-3, e2=1e-3, max_iter=10, convergencia=False, dg=dg)
     raiz, iteracoes = bissecao(f, a, b, tol=1e-3)
     #raizpf, iteracoespf = ponto_fixo(g, f, x0, e1=1e-3, e2=1e-3, max_iter=10)
@@ -189,7 +190,7 @@ def exemplo_2():
     else:
         print(f"Ponto Fixo: falhou após {itpf} iterações.")
         if convergencia is True:
-            print("Atenção: |g'({x0})| = {abs(dg):.4f} ≥ 1 ⇒ pode não convergir.")
+            print(f"Atenção: |g'({x0})| = {abs(dg):.4f} ≥ 1 ⇒ pode não convergir.")
         else:
             print("Falha no método - ponto fixo:")
             print("Mensagem de erro: Overflow numérico detectado ou valor inválido.")
@@ -212,8 +213,8 @@ def exemplo_3():
     g = lambda x: math.cos(x)
     a, b = 0, 1
     x0 = 0.5
-
-    dg = derivada_aproximada(g, x0)
+    elpsilon = 1e-3
+    dg = derivada_aproximada(g, x0, elpsilon)
     raiz, iteracoes = bissecao(f, a, b, tol=1e-3)
     raizpf, iteracoespf, convergencia = ponto_fixo(g, f, x0, e1=1e-3, e2=1e-3, max_iter=10, convergencia=False, dg =dg)
     raiznr, iteracoesnr = newton(f, df, x0, e1=1e-3, e2=1e-3, max_iter=10)
@@ -225,7 +226,7 @@ def exemplo_3():
     else:
         print(f"Ponto Fixo: falhou após {iteracoespf} iterações.")
         if convergencia is True:
-            print("Atenção: |g'({x0})| = {abs(dg):.4f} ≥ 1 ⇒ pode não convergir.")
+            print(f"Atenção: |g'({x0})| = {abs(dg):.4f} ≥ 1 ⇒ pode não convergir.")
         else:
             print("Falha no método - ponto fixo:")
             print("Mensagem de erro: Overflow numérico detectado ou valor inválido.")
@@ -236,6 +237,8 @@ def exemplo_3():
         print(f"Newton-Raphson: falhou após {iteracoesnr} iterações.")
         
     print(f"Secante: raiz ≈ {raizs}, iterações: {iteracoess}, ε₁=1e-3, ε₂=1e-3")
+
+# ------------------ Função auxiliar ponto fixo------------------
 
 
 def derivada_aproximada(g, x, h=1e-3):

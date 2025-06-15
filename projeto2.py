@@ -90,15 +90,17 @@ def gauss_seidel(A, b, x0=None, tol=1e-6, max_iter=100):
 
 # ---------- Sistema linear ----------
 
+
 A = np.array([
-    [3, 2, 4],
-    [1, 1, 2],
-    [4, 3, -2]
+    [6, -1, 2],
+    [-1, 7, 1],
+    [2, 1, 8]
 ], dtype=float)
 
-b = np.array([1, 2, 3], dtype=float)
+b = np.array([19, -6, 27], dtype=float)
 
 x0 = np.zeros(3)
+
 
 # ---------- Resolvendo com os métodos ----------
 

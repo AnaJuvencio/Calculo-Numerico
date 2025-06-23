@@ -103,8 +103,9 @@ x0 = np.zeros(3)
 
 
 # ---------- Resolvendo com os métodos ----------
-
-print("=== Resolvendo o sistema Ax = b ===\n")
+print("\n" + "="*40)
+print("Resolvendo o sistema 3x3")
+print("="*40)
 
 # Eliminação de Gauss
 try:
@@ -135,3 +136,64 @@ try:
     print(f"Gauss-Seidel: {x_seidel} (em {iter_seidel} iterações)")
 except Exception as e:
     print("Erro no Gauss-Seidel:", e)
+    
+    
+    
+#Sistema 12 x 12:
+def gerar_sistema_12x12():
+    np.random.seed(7)  # Reprodutibilidade
+
+    n = 12
+
+    # Solução real arbitrária com frações e sinais variados
+    x_real = np.array([1.5, -2.3, 0.7, 4.2, -3.1, 2.8, 1.1, -0.9, 3.3, -1.7, 2.2, 0.5])
+
+    # Matriz A com valores entre -10 e 10
+    A = np.random.randint(-10, 11, size=(n, n))
+    A = (A + A.T) // 2  # Simétrica
+
+    # Força dominância diagonal
+    for i in range(n):
+        A[i, i] = np.sum(np.abs(A[i])) + np.random.randint(3, 6)
+
+    b = A @ x_real
+    x0 = np.zeros(n)
+
+    return A, b, x_real, x0
+
+# ---------- Gerar o sistema ----------
+A, b, x_real, x0 = gerar_sistema_12x12()
+
+# ---------- Resolver com os quatro métodos ----------
+
+# Eliminação de Gauss
+x_gauss = gauss_ruggiero(A.copy(), b.copy())
+erro_gauss = np.linalg.norm(x_gauss - x_real, ord=np.inf)
+
+# Cholesky
+G = cholesky_ruggiero(A.copy())
+y = solve_triangular(G, b, lower=True)
+x_cholesky = solve_triangular(G.T, y, lower=False)
+erro_cholesky = np.linalg.norm(x_cholesky - x_real, ord=np.inf)
+
+# Gauss-Jacobi
+x_jacobi, iter_jacobi = gauss_jacobi(A, b, x0)
+erro_jacobi = np.linalg.norm(x_jacobi - x_real, ord=np.inf)
+
+# Gauss-Seidel
+x_seidel, iter_seidel = gauss_seidel(A, b, x0)
+erro_seidel = np.linalg.norm(x_seidel - x_real, ord=np.inf)
+
+# ---------- Impressão dos resultados ----------
+
+print("\n" + "="*40)
+print("RESULTADOS: SISTEMA 12x12")
+print("="*40)
+print("\nSolução real (x_real):")
+print(np.array2string(x_real, precision=6, floatmode='fixed'))
+print(f"\n{'Método':<20} {'Iterações':<12} {'Erro absoluto máximo'}")
+print("-"*55)
+print(f"{'Eliminação de Gauss':<20} {'—':<12} {erro_gauss:.2e}")
+print(f"{'Cholesky':<20} {'—':<12} {erro_cholesky:.2e}")
+print(f"{'Gauss-Jacobi':<20} {iter_jacobi:<12} {erro_jacobi:.2e}")
+print(f"{'Gauss-Seidel':<20} {iter_seidel:<12} {erro_seidel:.2e}")
